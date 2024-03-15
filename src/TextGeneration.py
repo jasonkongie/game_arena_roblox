@@ -1,5 +1,5 @@
 from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig
-from src.config import config
+from config import config
 import json
 import numpy as np
 MODEL_CONFIG = config["Model"]
