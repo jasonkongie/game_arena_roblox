@@ -1,37 +1,46 @@
 from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig
-from torch import float16
+from src.config import config
 import json
 import numpy as np
-# replace with your model
-MODEL_PATH = "../models/Mistral-7B-Instruct-v0.2"
+MODEL_CONFIG = config["Model"]
+QUANTIZATION_CONFIG = config["Quantization"]
+GENERATION_CONFIG = config["Generation"]
+TEMPLATE_TOKENIZATION_CONFIG = config["TemplateTokenization"]
+MODEL_PATH = MODEL_CONFIG["pretrained_model_name_or_path"]
 JSON_PATH = "../GenerationTemplates/template.json"
 Model = None
 Tokenizer = None
-
 Template = []
+BNBConfig = None
+
+
 
 def LoadModel():
     global Model
     global Tokenizer
     global Template
-    quantization_config = BitsAndBytesConfig(llm_int8_enable_fp32_cpu_offload=True,
-                                             bnb_4bit_compute_dtype=float16
-                                             )
-    Model = AutoModelForCausalLM.from_pretrained(MODEL_PATH, device_map='cuda', quantization_config=quantization_config)
-    print(Model)
-    Tokenizer = AutoTokenizer.from_pretrained(MODEL_PATH)
+    global BNBConfig
+
+    #Set up Bits and Bytes config
+    BNBConfig = BitsAndBytesConfig(**QUANTIZATION_CONFIG["BitsAndBytesConfig"])
+
+    # Load model
+    Model = AutoModelForCausalLM.from_pretrained(**MODEL_CONFIG, quantization_config=BNBConfig)
+
+    #Set up tokenizer
+    Tokenizer = AutoTokenizer.from_pretrained(pretrained_model_name_or_path=MODEL_PATH)
+
     Tokenizer.pad_token = Tokenizer.eos_token
+    # Load template
     with open(JSON_PATH, 'rb') as file:
         Template = json.load(file)
 
 
 def GenerateText(History):
-    TokenizedChatLen = 0
-    TokenizedChat = Tokenizer.apply_chat_template(np.concatenate((Template, History)), tokenize=True, add_generation_prompt=True, return_tensors="pt").to("cuda")
+    TokenizedChat = Tokenizer.apply_chat_template(**TEMPLATE_TOKENIZATION_CONFIG, conversation=np.concatenate((Template, History))).to("cuda")
     InputLen = TokenizedChat.shape[1]
-    GeneratedIds = Model.generate(TokenizedChat, max_new_tokens=50, pad_token_id=Tokenizer.eos_token_id, top_p=1.3, do_sample=True)
-    Output = Tokenizer.batch_decode(GeneratedIds[:, InputLen:], skip_special_tokens=True)[0]
-    print(Tokenizer.batch_decode(GeneratedIds, skip_special_tokens=True)[0])
+    GeneratedIds = Model.generate(**GENERATION_CONFIG, inputs=TokenizedChat, pad_token_id=Tokenizer.eos_token_id)
+    Output = Tokenizer.batch_decode(sequences = GeneratedIds[:, InputLen:], skip_special_tokens=True)[0]
     return Output
 
 

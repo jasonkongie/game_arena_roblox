@@ -1,6 +1,7 @@
 from waitress import serve
+from config import config
 import app
 import TextGeneration
 TextGeneration.LoadModel()
 print("Model loaded")
-serve(app.app, host='127.0.0.1', port=8080)
+serve(**config["Server"], app=app.app)
