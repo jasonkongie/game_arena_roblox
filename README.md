@@ -12,7 +12,7 @@ Talk with local large language model in Roblox game
 8) Once it's loaded/downloaded you will see "Model loaded" "Starting server". The server will be on `127.0.0.1:8080`. You can change address and port in src/config. **THE SERVER IS STILL IN DEVELOPMENT SO IT'S NOT 100% SAFE**
 9) From here you will need tool like [ngrok](https://ngrok.com/) or port forwarding to make this accessible on WAN. 
 ## Roblox integration
-1) Open ExampleGame.rbxl that you downloaded where everything is set up except for server URL.
+1) Open ExampleGame.rbxl in repo. Everything is set up except for server URL.
 2) In workspace open "Pepe" model and open "APIScript"
 3) Replace AppUrl with your URL
-4) DONE! You can also change LogSize and AnswerEverynMessages(variable used to control how often will AI talk).
+4) DONE! You can also change LogSize(ammount of messages that will be sent to AI) and AnswerEverynMessages(variable used to control how often will AI talk).
