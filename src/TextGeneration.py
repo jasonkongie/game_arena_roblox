@@ -1,53 +1,49 @@
-from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig
+# TextGeneration.py
+
+import openai
 from config import config
 import json
-import numpy as np
+
+# Load configurations
 MODEL_CONFIG = config["Model"]
-QUANTIZATION_CONFIG = config["Quantization"]
 GENERATION_CONFIG = config["Generation"]
-TEMPLATE_TOKENIZATION_CONFIG = config["TemplateTokenization"]
-MODEL_PATH = MODEL_CONFIG["pretrained_model_name_or_path"]
-JSON_PATH = "../GenerationTemplates/template.json"
-Model = None
-Tokenizer = None
+JSON_PATH = "../GenerationTemplates/template.json"  # Adjust the path if necessary
 Template = []
-BNBConfig = None
-
-
 
 def LoadModel():
-    global Model
-    global Tokenizer
     global Template
-    global BNBConfig
+    # Set up OpenAI API key
+    openai.api_key = MODEL_CONFIG["openai_api_key"]
 
-    #Set up Bits and Bytes config
-    BNBConfig = BitsAndBytesConfig(**QUANTIZATION_CONFIG["BitsAndBytesConfig"])
-
-    # Load model
-    Model = AutoModelForCausalLM.from_pretrained(**MODEL_CONFIG, quantization_config=BNBConfig)
-
-    #Set up tokenizer
-    Tokenizer = AutoTokenizer.from_pretrained(pretrained_model_name_or_path=MODEL_PATH)
-
-    Tokenizer.pad_token = Tokenizer.eos_token
-    # Load template
-    with open(JSON_PATH, 'rb') as file:
+    # Load template (system prompts)
+    with open(JSON_PATH, 'r') as file:
         Template = json.load(file)
 
-
 def GenerateText(History):
-    TokenizedChat = Tokenizer.apply_chat_template(**TEMPLATE_TOKENIZATION_CONFIG, conversation=np.concatenate((Template, History))).to("cuda")
-    InputLen = TokenizedChat.shape[1]
-    GeneratedIds = Model.generate(**GENERATION_CONFIG, inputs=TokenizedChat, pad_token_id=Tokenizer.eos_token_id)
-    Output = Tokenizer.batch_decode(sequences = GeneratedIds[:, InputLen:], skip_special_tokens=True)[0]
+    # Build the conversation by combining the template and history
+    conversation = Template + History
+
+    # Make the API call to OpenAI
+    response = openai.ChatCompletion.create(
+        model=MODEL_CONFIG["model_name"],
+        messages=conversation,
+        **GENERATION_CONFIG
+    )
+    # Extract the assistant's reply
+    Output = response['choices'][0]['message']['content']
     return Output
 
-
 def GenerateModelInput(messages):
-    resultstring = ""
+    result = []
     for message in messages:
         nickname = message["nickname"]
         content = message["content"]
-        resultstring += f"\n{nickname}: {content}"
-    return [{"role": "user", "content": resultstring}]
+        # Map nickname to role
+        if nickname.lower() == "assistant":
+            role = "assistant"
+        elif nickname.lower() == "system":
+            role = "system"
+        else:
+            role = "user"
+        result.append({"role": role, "content": content})
+    return result

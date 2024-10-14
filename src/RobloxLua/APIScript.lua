@@ -4,7 +4,7 @@ local AnswerEverynMessages = 1
 local NonAnsweredMessages = AnswerEverynMessages - 1
 local HttpService = game:GetService("HttpService")
 local ChatService = game:GetService("Chat")
-local AppUrl = "YOUR URL HERE"
+local AppUrl = "http://127.0.0.1:8080/"
 Log = {}
 
 function ClearTable(tbl, AmmountToKeep)
