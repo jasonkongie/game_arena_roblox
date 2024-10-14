@@ -16,3 +16,4 @@ Talk with local large language model in Roblox game
 2) In workspace open "Pepe" model and open "APIScript"
 3) Replace AppUrl with your URL
 4) DONE! You can also change LogSize(ammount of messages that will be sent to AI) and AnswerEverynMessages(variable used to control how often will AI talk).
+# game_arena_roblox
