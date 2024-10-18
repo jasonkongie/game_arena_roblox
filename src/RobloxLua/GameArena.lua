@@ -34,26 +34,57 @@ local function SendMessageAsPepe(player, message)
 
 	-- Add PePe's response to the log
 	table.insert(Log, {nickname = BotName, content = message})
-	
+
 	--Pepe is sending a message
 	ChatService:Chat(script.Parent.Head, message)
 end
 
--- Function to start the game for a player
-local function startGameForPlayer(player)
-	print("Starting game for player:", player.Name)
+-- Function to send player's message
+local function sendMessageAsPlayer(player, message)
+	print("Sending message as Player:", message)
 
+	-- Fire message to all clients as Player
+	game.ReplicatedStorage.ClientSendMsg:FireAllClients(player.Name, message)
+
+	-- Add Player's response to the log
+	table.insert(Log, {nickname = player.Name, content = message})
+
+	-- Display Player's message in chat
+	if player.Character and player.Character:FindFirstChild("Head") then
+		ChatService:Chat(player.Character.Head, message, Enum.ChatColor.White)
+	end
+end
+
+-- Function to send post request
+local function sendPostRequest(url, requestBody)
+	print("Sending POST request to the server. URL:", url)
 	local success, response = pcall(function()
 		return HttpService:PostAsync(
-			AppUrl .. "/start_game",
-			"",  -- No body needed for starting the game
-			Enum.HttpContentType.ApplicationJson,  -- This will automatically set the content-type to application/json
+			url,
+			requestBody,
+			Enum.HttpContentType.ApplicationJson,  -- This automatically sets Content-Type
 			false  -- compress
 		)
 	end)
 
 	if success then
-		print("Game started successfully for player:", player.Name)
+		print("POST request successful.")
+		return response
+	else
+		print("POST request failed.")
+		warn(response)
+		return nil
+	end
+end
+
+
+
+-- Function to start the game for a player
+local function startGameForPlayer(player)
+	print("Starting game for player:", player.Name)
+
+	local response = sendPostRequest(AppUrl .. "/start_game", "")
+	if response then
 		local data = HttpService:JSONDecode(response)
 		local sessionId = data.session_id
 		local aiMessage = data.system_prompt
@@ -67,10 +98,10 @@ local function startGameForPlayer(player)
 		}
 
 		-- Send AI message to the player as "PePe"
-		SendMessageAsPepe(player, aiMessage)  -- Use the new function here
+		SendMessageAsPepe(player, aiMessage)
+		
 	else
 		print("Failed to start game for player:", player.Name)
-		warn(response)
 	end
 end
 
@@ -100,18 +131,8 @@ local function onPlayerChatted(player)
 			user_response = message
 		})
 
-		print("Sending user response to the server. URL:", url)
-		local success, response = pcall(function()
-			return HttpService:PostAsync(
-				url,
-				requestBody,
-				Enum.HttpContentType.ApplicationJson,  -- This automatically sets Content-Type
-				false  -- compress
-			)
-		end)
-
-		if success then
-			print("Server responded successfully.")
+		local response = sendPostRequest(url, requestBody)
+		if response then
 			local data = HttpService:JSONDecode(response)
 			local aiMessage = data.ai_message
 			session.gameOver = data.game_over
@@ -120,7 +141,7 @@ local function onPlayerChatted(player)
 			print("Is game over:", session.gameOver)
 
 			-- Send AI message to the player as "PePe"
-			SendMessageAsPepe(player, aiMessage)  -- Use the new function here
+			SendMessageAsPepe(player, aiMessage)
 
 			-- If game is over, inform the player
 			if session.gameOver then
@@ -130,7 +151,6 @@ local function onPlayerChatted(player)
 			end
 		else
 			print("Failed to send user response for player:", player.Name)
-			warn(response)
 		end
 	end)
 end
