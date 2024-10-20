@@ -1,7 +1,6 @@
-# games/taboo/taboo_game.py
+# src/games/taboo/taboo_game.py
 
-from games.base_game import BaseGame
-from games.text_generator import TextGenerator
+from src.games.base_game import BaseGame
 import random
 import json
 import os
@@ -15,18 +14,25 @@ class TabooGame(BaseGame):
         with open(prompt_file, 'r') as f:
             system_prompts = json.load(f)
         self.system_prompt = random.choice(list(system_prompts.values()))
-        self.text_generator = TextGenerator()
-
+        # Initialize conversation
+        self.conversation = []
+        self.current_round = 0
+        self.game_over = False
+        self.game_status = None
         # Load taboo words
         taboo_file = os.path.join(os.path.dirname(__file__), 'taboo.json')
         with open(taboo_file, 'r') as f:
             taboo_words = json.load(f)
-        # Flatten the list of words
         self.game_secret = random.choice([word for words in taboo_words.values() for word in words])
 
-    def generate_ai_response(self):
-        ai_message = self.text_generator.generate_response(self.system_prompt, self.conversation)
-        return ai_message
+        # Add system prompt to conversation
+        self.update_conversation('system', self.system_prompt)
+
+    def update_conversation(self, nickname, content):
+        self.conversation.append({"nickname": nickname, "content": content})
+
+    def is_game_over(self):
+        return self.game_over
 
     def check_valid_guess(self, ai_message):
         pattern = r"my guess of the word is:"

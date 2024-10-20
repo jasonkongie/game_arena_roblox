@@ -1,36 +1,34 @@
-# games/akinator_game.py
+# src/games/akinator/akinator_game.py
 
-import json
+from src.games.base_game import BaseGame
 import random
-import re
+import json
 import os
 
-class AkinatorGame:
-    def __init__(self, max_round=20):
-        self.max_round = max_round
-        self.current_round = 0
-        self.game_status = None
-        self.system_prompt = self.load_random_prompt()
-        self.conversation = []
-        self.game_over = False
-
-    def load_random_prompt(self):
-        # Adjust the path to the JSON file
-        prompts_file = os.path.join(os.path.dirname(__file__), 'akinator_optimized_prompts.json')
-        with open(prompts_file, 'r') as f:
+class AkinatorGame(BaseGame):
+    def __init__(self):
+        super().__init__(max_rounds=20, save_path='output/akinator/')
+        # Load system prompts
+        prompt_file = os.path.join(os.path.dirname(__file__), 'akinator_optimized_prompts.json')
+        with open(prompt_file, 'r') as f:
             system_prompts = json.load(f)
-        all_prompts = list(system_prompts.values())
-        return random.choice(all_prompts)
+        # Randomly select a system prompt
+        self.system_prompt = random.choice(list(system_prompts.values()))
+        # Initialize conversation
+        self.conversation = []
+        self.current_round = 0
+        self.game_over = False
+        self.game_status = None
 
-    def check_valid_guess(self, s):
-        pattern = r"this is a guess"
-        return len(re.findall(pattern, s.lower())) != 0
+        # Add system prompt to conversation
+        self.update_conversation('system', self.system_prompt)
+
+    def update_conversation(self, nickname, content):
+        self.conversation.append({"nickname": nickname, "content": content})
 
     def is_game_over(self):
-        return self.game_over or self.current_round >= self.max_round
+        return self.game_over
 
-    def update_conversation(self, role, content):
-        self.conversation.append({"role": role, "content": content})
-
-    def get_last_message(self):
-        return self.conversation[-1] if self.conversation else None
+    def check_valid_guess(self, ai_message):
+        # Implement your logic to check if the AI's guess is valid
+        return "my guess is" in ai_message.lower()

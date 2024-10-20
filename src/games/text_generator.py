@@ -19,18 +19,22 @@ def LoadModel():
     with open(JSON_PATH, 'r') as file:
         Template = json.load(file)
 
-def GenerateText(History):
+def GenerateText(conversation_history):
     # Build the conversation by combining the template and history
-    conversation = Template + History
+    conversation = Template + conversation_history
 
     # Make the API call to OpenAI
     response = openai.ChatCompletion.create(
         model=MODEL_CONFIG["model_name"],
         messages=conversation,
-        **GENERATION_CONFIG
+        temperature=GENERATION_CONFIG.get("temperature", 1.0),
+        max_tokens=GENERATION_CONFIG.get("max_tokens", 150),
+        top_p=GENERATION_CONFIG.get("top_p", 1.0),
+        frequency_penalty=GENERATION_CONFIG.get("frequency_penalty", 0.0),
+        presence_penalty=GENERATION_CONFIG.get("presence_penalty", 0.0),
     )
     # Extract the assistant's reply
-    Output = response['choices'][0]['message']['content']
+    Output = response['choices'][0]['message']['content'].strip()
     return Output
 
 def GenerateModelInput(messages):
