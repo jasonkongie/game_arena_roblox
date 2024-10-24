@@ -32,7 +32,8 @@ def akinator_start():
     return jsonify({
         "message": "Akinator game started.",
         "session_id": session_id,
-        "system_prompt": game.system_prompt
+        "system_prompt": game.system_prompt,
+        "game_secret": game.game_secret  # Send the secret word to the client
     })
 
 @app.route('/akinator_ask_question', methods=['POST'])
