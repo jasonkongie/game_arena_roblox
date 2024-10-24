@@ -1,5 +1,8 @@
 # app.py
 
+import sys
+sys.path.append('/home/ubuntu/game_arena_roblox')
+
 from flask import Flask, request, jsonify
 from src.games.akinator.akinator_game import AkinatorGame
 from src.games.taboo.taboo_game import TabooGame
@@ -291,4 +294,3 @@ def bluffing_end_game():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8000)
-
