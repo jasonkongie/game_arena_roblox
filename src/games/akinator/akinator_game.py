@@ -10,6 +10,7 @@ class AkinatorGame(BaseGame):
         super().__init__(max_rounds=20, save_path='output/akinator/')
         # Load system prompts
         prompt_file = os.path.join(os.path.dirname(__file__), 'akinator_optimized_prompts.json')
+        game_secret_file = os.path.join(os.path.dirname(__file__), 'akinator.json')
         with open(prompt_file, 'r') as f:
             system_prompts = json.load(f)
         # Randomly select a system prompt
@@ -19,6 +20,12 @@ class AkinatorGame(BaseGame):
         self.current_round = 0
         self.game_over = False
         self.game_status = None
+
+        #Game secret!
+        with open(game_secret_file, 'r') as f:
+            game_secrets = json.load(f)
+        # Randomly select a system prompt
+        self.game_secret = random.choice(list(game_secrets))
 
         # Add system prompt to conversation
         self.update_conversation('system', self.system_prompt)

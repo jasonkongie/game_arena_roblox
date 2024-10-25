@@ -1,5 +1,8 @@
 # app.py
 
+import sys
+sys.path.append('/home/ubuntu/game_arena_roblox')
+
 from flask import Flask, request, jsonify
 from src.games.akinator.akinator_game import AkinatorGame
 from src.games.taboo.taboo_game import TabooGame
@@ -29,7 +32,8 @@ def akinator_start():
     return jsonify({
         "message": "Akinator game started.",
         "session_id": session_id,
-        "system_prompt": game.system_prompt
+        "system_prompt": game.system_prompt,
+        "game_secret": game.game_secret  # Send the secret word to the client
     })
 
 @app.route('/akinator_ask_question', methods=['POST'])
@@ -291,4 +295,3 @@ def bluffing_end_game():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8000)
-
