@@ -98,6 +98,7 @@ class BaseGame(ABC):
             conversation.append_message(
                 conversation.roles[1], None
             )
+
         
 
         stream_iter = stream_iter_fn(
@@ -151,15 +152,6 @@ class BaseGame(ABC):
         conversation.append_message(conversation.roles[1], user_choice)
 
 
-
-
-
-
-
-
-
-
-
     # @abstractmethod
     # def is_llm_giving_answer(self, conversation: Conversation) -> bool:
     #     pass
@@ -169,10 +161,3 @@ class BaseGame(ABC):
     
     # def is_llm_illegal_input(self, input_text: str) -> bool:
     #     pass
-
-    #Let's worry about the Database later, and let game status
-    #be decided by child class 
-    
-    # def set_end_game_status(self, user_response: str) -> None:
-
-    # def reach_max_round(self) -> bool:
