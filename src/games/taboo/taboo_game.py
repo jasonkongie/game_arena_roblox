@@ -8,15 +8,14 @@ import re
 
 class TabooGame(BaseGame):
     def __init__(self):
-        super().__init__(max_rounds=5, save_path='output/taboo/')
+        super().__init__(max_rounds=5)
         # Load system prompts
         prompt_file = os.path.join(os.path.dirname(__file__), 'taboo_optimized_prompts.json')
         with open(prompt_file, 'r') as f:
             system_prompts = json.load(f)
         self.system_prompt = random.choice(list(system_prompts.values()))
-        # Initialize conversation
-        self.conversation = []
-        self.current_round = 0
+
+        self.round = 0
         self.game_over = False
         self.game_status = None
         # Load taboo words
@@ -24,12 +23,7 @@ class TabooGame(BaseGame):
         with open(taboo_file, 'r') as f:
             taboo_words = json.load(f)
         self.game_secret = random.choice([word for words in taboo_words.values() for word in words])
-
-        # Add system prompt to conversation
-        self.update_conversation('system', self.system_prompt)
-
-    def update_conversation(self, nickname, content):
-        self.conversation.append({"nickname": nickname, "content": content})
+        self.conversation.set_system_message(self.system_prompt)
 
     def is_game_over(self):
         return self.game_over

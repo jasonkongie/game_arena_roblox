@@ -8,7 +8,7 @@ from games.base_game import BaseGame
 
 class BluffingGame(BaseGame):
     def __init__(self):
-        super().__init__(max_rounds=6, save_path='output/bluffing/')
+        super().__init__(max_rounds=6)
         # Load system prompts
         prompt_file = os.path.join(os.path.dirname(__file__), 'bluffing_optimized_prompts.json')
         with open(prompt_file, 'r') as f:
@@ -24,8 +24,7 @@ class BluffingGame(BaseGame):
         self.system_question = random.choice(self.bluffing_questions)
 
         # Initialize conversation
-        self.conversation = []
-        self.current_round = 0
+        self.round = 0
         self.game_over = False
         self.game_status = None
 
@@ -34,10 +33,9 @@ class BluffingGame(BaseGame):
         self.secret_system_message = None  # Not used in this context
 
         # Add system prompt to conversation
-        self.update_conversation('system', self.system_prompt)
+        # self.update_conversation('system', self.system_prompt)
+        self.conversation.set_system_message(self.system_prompt)
 
-    def update_conversation(self, nickname, content):
-        self.conversation.append({"nickname": nickname, "content": content})
 
     def is_game_over(self):
         return self.game_over

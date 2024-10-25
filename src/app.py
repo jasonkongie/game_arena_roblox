@@ -7,10 +7,27 @@ from flask import Flask, request, jsonify
 from src.games.akinator.akinator_game import AkinatorGame
 from src.games.taboo.taboo_game import TabooGame
 from games.bluffing.bluffing_game import BluffingGame
-import TextGeneration  # Import TextGeneration module
+from fschat.api_provider_game import get_api_provider_stream_iter
+
+# import TextGeneration  # Import TextGeneration module
 import uuid
 
 app = Flask(__name__)
+
+
+
+
+#next_llm_query_type : question. 
+
+# generation_response(
+#     st.session_state.next_llm_query_type,
+#     get_api_provider_stream_iter,
+#     st.session_state.conversation,
+#     st.session_state.model_name,
+#     st.session_state.api_endpoint_info[st.session_state.model_name],
+# )
+
+
 
 # Use an in-memory store for sessions
 games = {}
@@ -58,17 +75,20 @@ def akinator_ask_question():
         return jsonify({"error": "No user response provided."}), 400
 
     # Update conversation with user response
-    game.update_conversation('user', user_response)
+    game.update_user_conversation(game.conversation, user_response)
 
-    # Prepare model input
-    model_input = TextGeneration.GenerateModelInput(game.conversation)
+    #You replace the TextGeneration code with api_provider. 
+    next_llm_query_type = "question"
 
-    # Generate AI's next question or guess
-    ai_message = TextGeneration.GenerateText(model_input)
+    ai_message = game.generation_response(
+        next_llm_query_type,
+        get_api_provider_stream_iter,
+        game.conversation,
+        )
 
     # Update conversation with AI message
-    game.update_conversation('assistant', ai_message)
-    game.current_round += 1
+    game.update_AI_conversation(game.conversation, ai_message)
+    game.round += 1
 
     # Check if AI made a guess
     if game.check_valid_guess(ai_message):
@@ -131,17 +151,18 @@ def taboo_ask_question():
         return jsonify({"error": "No user response provided."}), 400
 
     # Update conversation with user response
-    game.update_conversation('user', user_response)
+    game.update_user_conversation(game.conversation, user_response)
 
-    # Prepare model input
-    model_input = TextGeneration.GenerateModelInput(game.conversation)
+    next_llm_query_type = "answer"
 
-    # Generate AI's next response
-    ai_message = TextGeneration.GenerateText(model_input)
-
+    ai_message = game.generation_response(
+        next_llm_query_type,
+        get_api_provider_stream_iter,
+        game.conversation,
+        )
     # Update conversation with AI message
-    game.update_conversation('assistant', ai_message)
-    game.current_round += 1
+    game.update_AI_conversation(game.conversation, ai_message)
+    game.round += 1
 
     # Taboo-specific game logic
     if game.check_word_uttered(ai_message):
@@ -150,7 +171,7 @@ def taboo_ask_question():
     elif game.check_valid_guess(ai_message):
         game.game_over = True
         game.game_status = 'MODEL_WIN'
-    elif game.current_round >= game.max_rounds:
+    elif game.round >= game.max_rounds:
         game.game_over = True
         game.game_status = 'MAX_ROUNDS_REACHED'
 
@@ -212,16 +233,17 @@ def bluffing_provide_statement():
     game.user_statement_truth = user_statement_truth
 
     # Update conversation
-    game.update_conversation('user', game.first_user_message)
+    game.update_user_conversation(game.conversation, game.first_user_message)
+    next_llm_query_type = "question"
 
-    # Prepare model input
-    model_input = TextGeneration.GenerateModelInput(game.conversation)
-
-    # Generate AI's first question
-    ai_message = TextGeneration.GenerateText(model_input)
+    ai_message = game.generation_response(
+        next_llm_query_type,
+        get_api_provider_stream_iter,
+        game.conversation,
+        )
 
     # Update conversation with AI message
-    game.update_conversation('assistant', ai_message)
+    game.update_AI_conversation(game.conversation, ai_message)
 
     return jsonify({
         "ai_message": ai_message,
@@ -251,17 +273,18 @@ def bluffing_ask_question():
         return jsonify({"error": "No user response provided."}), 400
 
     # Update conversation with user response
-    game.update_conversation('user', user_response)
+    game.update_user_conversation(game.conversation, user_response)
+    next_llm_query_type = "question"
 
-    # Prepare model input
-    model_input = TextGeneration.GenerateModelInput(game.conversation)
-
-    # Generate AI's next question or guess
-    ai_message = TextGeneration.GenerateText(model_input)
+    ai_message = game.generation_response(
+        next_llm_query_type,
+        get_api_provider_stream_iter,
+        game.conversation,
+        )
 
     # Update conversation with AI message
-    game.update_conversation('assistant', ai_message)
-    game.current_round += 1
+    game.update_AI_conversation(game.conversation, ai_message)
+    game.round += 1
 
     # Check if AI made a guess
     if game.is_llm_giving_answer(ai_message):
@@ -271,7 +294,7 @@ def bluffing_ask_question():
             game.set_game_status('MODEL_WIN')
 
     # Check for max rounds
-    if game.current_round >= game.max_rounds and not game.is_game_over():
+    if game.round >= game.max_rounds and not game.is_game_over():
         game.set_game_status('MAX_ROUNDS_REACHED')
 
     # Update the game state in the games dictionary

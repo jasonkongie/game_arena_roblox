@@ -5,9 +5,10 @@ import random
 import json
 import os
 
+
 class AkinatorGame(BaseGame):
     def __init__(self):
-        super().__init__(max_rounds=20, save_path='output/akinator/')
+        super().__init__(max_rounds=20)
         # Load system prompts
         prompt_file = os.path.join(os.path.dirname(__file__), 'akinator_optimized_prompts.json')
         game_secret_file = os.path.join(os.path.dirname(__file__), 'akinator.json')
@@ -16,7 +17,17 @@ class AkinatorGame(BaseGame):
         # Randomly select a system prompt
         self.system_prompt = random.choice(list(system_prompts.values()))
         # Initialize conversation
-        self.conversation = []
+        # self.conversation = []
+
+        #randomly choose a model: MOVE TO BASEGAME.py
+        # models, _, _ = get_model_list(
+        #     '../../config/api_endpoint.json ', multimodal=False
+        # )
+        # model_name = random.choice(models)
+
+        # self.conversation = get_conversation_template(model_name)
+
+
         self.current_round = 0
         self.game_over = False
         self.game_status = None
@@ -28,10 +39,8 @@ class AkinatorGame(BaseGame):
         self.game_secret = random.choice(list(game_secrets))
 
         # Add system prompt to conversation
-        self.update_conversation('system', self.system_prompt)
-
-    def update_conversation(self, nickname, content):
-        self.conversation.append({"nickname": nickname, "content": content})
+        self.conversation.set_system_message(self.system_prompt)
+        # self.update_conversation('system', self.system_prompt)
 
     def is_game_over(self):
         return self.game_over
