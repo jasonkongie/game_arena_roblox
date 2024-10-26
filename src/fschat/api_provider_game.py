@@ -958,6 +958,7 @@ def sambanova_api_stream_iter(model_name, messages, temp, top_p, max_tokens, api
     text = ""
     for line in response.iter_lines():
         if line:
+            print(line)
             data = line.decode("utf-8")
             if data.endswith("[DONE]"):
                 break

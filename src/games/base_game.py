@@ -9,7 +9,6 @@ import hashlib
 
 from fschat.conversation_game import Conversation
 from fastchat.model.model_adapter import get_conversation_template
-
 from utils import get_model_list
 
 
@@ -99,7 +98,6 @@ class BaseGame(ABC):
                 conversation.roles[1], None
             )
 
-        
 
         stream_iter = stream_iter_fn(
             conversation,
@@ -112,8 +110,9 @@ class BaseGame(ABC):
         )
 
         output = ""
-
+        # print(stream_iter)
         for data in stream_iter:
+            print(data)
             assert data["error_code"] == 0
             # Update the output with the latest text from the API
             output = data["text"].strip()
