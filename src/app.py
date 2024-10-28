@@ -312,7 +312,7 @@ from src.games.akinator.akinator_page import router as akinator_router
 from src.games.taboo.taboo_page import router as taboo_router
 from src.games.bluffing.bluffing_page import router as bluffing_router
 
-app = FastAPI(title="Game Arena")
+app = FastAPI(title="Game Arena", debug=True)
 
 app.include_router(akinator_router, prefix="/akinator")
 app.include_router(taboo_router, prefix="/taboo")
