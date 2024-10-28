@@ -4,47 +4,78 @@ from src.games.base_game import BaseGame
 import random
 import json
 import os
+import re
+from fschat.conversation_game import Conversation
 
+
+# paths to the JSON files
+LEVEL_DATA_FILES = {
+    1: "./assets/level1_applicances.json",
+    2: "./assets/level2_instruments.json",
+    3: "./assets/level3_animals.json"
+}
+
+def load_prompts(prompt_file_path):
+    with open(prompt_file_path, 'r') as f:
+        return json.load(f)
+    
+def check_akinator_valid_guess(s):
+    pattern = r"this is a guess"
+    return len(re.findall(pattern, s.lower())) != 0
 
 class AkinatorGame(BaseGame):
-    def __init__(self):
-        super().__init__(max_rounds=20)
+    
+    def __init__(self, level: int):
+        #add level
+        self.level = level
+        max_round_dict = {1: 20, 2: 15, 3: 10}
+        max_round = max_round_dict.get(level)
+
+        super().__init__(max_rounds=max_round)
         # Load system prompts
         prompt_file = os.path.join(os.path.dirname(__file__), 'akinator_optimized_prompts.json')
-        game_secret_file = os.path.join(os.path.dirname(__file__), 'akinator.json')
-        with open(prompt_file, 'r') as f:
-            system_prompts = json.load(f)
+        self.game_secret = self.load_random_object(level)
+        
         # Randomly select a system prompt
+        system_prompts = load_prompts(prompt_file)
         self.system_prompt = random.choice(list(system_prompts.values()))
-        # Initialize conversation
-        # self.conversation = []
+        self.conversation.set_system_message(self.system_prompt)
 
-        #randomly choose a model: MOVE TO BASEGAME.py
-        # models, _, _ = get_model_list(
-        #     '../../config/api_endpoint.json ', multimodal=False
-        # )
-        # model_name = random.choice(models)
-
-        # self.conversation = get_conversation_template(model_name)
-
+        # Set allowed answers based on the level
+        if level in [1, 2]:
+            self.allowed_answers = ["Yes", "Probably Yes", "Don't Know", "Probably No", "No"]
+        else:  # Level 3
+            self.allowed_answers = ["Yes", "Don't Know", "No"]
+        
+        accepted_answers = ', '.join([f'"{ans}"' for ans in self.allowed_answers])
+        self.system_prompt += f"\n\nAccepted Answers: Only these responses are acceptable: {accepted_answers}."
+        self.system_prompt += f"\n\nCurrent level is {self.level}, You can only ask {max_round} questions."
 
         self.current_round = 0
         self.game_over = False
         self.game_status = None
-
-        #Game secret!
-        with open(game_secret_file, 'r') as f:
-            game_secrets = json.load(f)
-        # Randomly select a system prompt
-        self.game_secret = random.choice(list(game_secrets))
-
-        # Add system prompt to conversation
-        self.conversation.set_system_message(self.system_prompt)
-        # self.update_conversation('system', self.system_prompt)
+        
 
     def is_game_over(self):
+        if self.current_round >= self.max_rounds:
+            self.game_over = True
+            self.game_status = 'Round Limit Reached! You win!'
         return self.game_over
 
     def check_valid_guess(self, ai_message):
         # Implement your logic to check if the AI's guess is valid
         return "my guess is" in ai_message.lower()
+    
+    def load_random_object(self, level):
+        data_file = LEVEL_DATA_FILES.get(level)
+        if not data_file or not os.path.exists(data_file):
+            raise FileNotFoundError(f"Data file for level {level} not found.")
+        with open(data_file, 'r') as f:
+            objects_list = json.load(f)
+        return random.choice(objects_list)
+
+    def is_llm_giving_answer(self, conversation: Conversation) -> bool:
+        model_last_response = conversation.messages[-1][1]
+        if check_akinator_valid_guess(model_last_response):
+            return True
+        return False

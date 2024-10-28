@@ -1,6 +1,5 @@
 import random
 from abc import ABC, abstractmethod
-from datetime import datetime
 from typing import Callable
 
 import re
@@ -42,7 +41,7 @@ class BaseGame(ABC):
         models, _, api_endpoint_info = get_model_list(
             'src/config/api_endpoint.json', multimodal=False
         )
-        self.model_name = random.choice(models)
+        self.model_name = 'gpt-4o-2024-08-06'
         self.model_api_info = api_endpoint_info[self.model_name]
         self.conversation = get_conversation_template(self.model_name)
         self.round = 0
@@ -54,6 +53,9 @@ class BaseGame(ABC):
         # self.game_start = False
         # self.generate_next_llm_query = False
         # self.next_llm_query_type = None
+        
+        self.available_levels = []
+        self.game_level = None
 
 
     def initialize_game(self, conversation: Conversation) -> None:
@@ -89,14 +91,14 @@ class BaseGame(ABC):
         else:
             raise NotImplementedError(f"response type: {type} is not implemented.")
         
-        if 'mistral' in self.model_name:
-            conversation.append_message(
-                conversation.roles[1], prefix
-            )
-        else:
-            conversation.append_message(
-                conversation.roles[1], None
-            )
+        # if 'mistral' in self.model_name:
+        #     conversation.append_message(
+        #         conversation.roles[1], prefix
+        #     )
+        # else:
+        #     conversation.append_message(
+        #         conversation.roles[1], None
+        #     )
 
 
         stream_iter = stream_iter_fn(
@@ -108,7 +110,6 @@ class BaseGame(ABC):
             max_new_tokens=max_new_tokens,
             state=state,
         )
-
         output = ""
         # print(stream_iter)
         for data in stream_iter:
@@ -132,10 +133,9 @@ class BaseGame(ABC):
             conversation.update_last_message(output)
         
         self.round += 1
-
         return output
 
-    # def update_conversation_with_user_choice(
+     # def update_conversation_with_user_choice(
     def update_user_conversation(
         self, conversation: Conversation, user_choice: str
     ) -> None:
@@ -151,6 +151,11 @@ class BaseGame(ABC):
         conversation.append_message(conversation.roles[1], user_choice)
 
 
+    def reach_max_round(self) -> bool:
+        if self.round >= self.max_round:
+            return True
+        return False
+    
     # @abstractmethod
     # def is_llm_giving_answer(self, conversation: Conversation) -> bool:
     #     pass
