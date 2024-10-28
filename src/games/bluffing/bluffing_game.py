@@ -7,8 +7,12 @@ import re
 from games.base_game import BaseGame
 
 class BluffingGame(BaseGame):
-    def __init__(self):
-        super().__init__(max_rounds=6)
+    def __init__(self, game_level=1):
+        max_rounds = game_level * 2 + 3
+        super().__init__(max_rounds=max_rounds)
+
+        self.game_level = game_level
+
         # Load system prompts
         prompt_file = os.path.join(os.path.dirname(__file__), 'bluffing_optimized_prompts.json')
         with open(prompt_file, 'r') as f:
@@ -18,10 +22,11 @@ class BluffingGame(BaseGame):
         self.system_prompt_index = all_prompts.index(self.system_prompt)
 
         # Load bluffing questions
-        bluffing_questions_file = os.path.join(os.path.dirname(__file__), 'bluffing.json')
+        bluffing_questions_file = os.path.join(os.path.dirname(__file__), 'bluffing_multilevel.json')
         with open(bluffing_questions_file, 'r') as f:
             self.bluffing_questions = json.load(f)
-        self.system_question = random.choice(self.bluffing_questions)
+        self.bluffing_questions_level = self.bluffing_questions[f'level {self.game_level}']
+        self.system_question = random.choice(self.bluffing_questions_level)
 
         # Initialize conversation
         self.round = 0

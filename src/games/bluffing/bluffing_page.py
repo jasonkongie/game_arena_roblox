@@ -1,7 +1,7 @@
 # src/games/bluffing/bluffing_page.py
 
-from fastapi import APIRouter, HTTPException
-from typing import Dict
+from fastapi import APIRouter, HTTPException, Query
+from typing import Dict, Optional
 import uuid
 
 from src.games.bluffing.bluffing_game import BluffingGame
@@ -11,9 +11,9 @@ from fschat.api_provider_game import get_api_provider_stream_iter
 router = APIRouter()
 
 @router.post("/start")
-def bluffing_start():
+def bluffing_start(level: Optional[int] = Query(default=1, ge=1, le=3, description="Specify the level of the game (1 to 3)")):
     session_id = str(uuid.uuid4())
-    game = BluffingGame()
+    game = BluffingGame(game_level=level)
     games[session_id] = game
 
     return {

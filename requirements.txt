@@ -60,3 +60,13 @@ urllib3==2.2.1
 waitress==3.0.0
 Werkzeug==3.0.1
 yarl==1.15.2
+anthropic
+cohere
+google
+google.generativeai
+mistralai
+openai
+pre-commit
+replicate
+streamlit
+vertexai
