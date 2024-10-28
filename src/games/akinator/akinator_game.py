@@ -1,3 +1,7 @@
+
+
+
+
 # src/games/akinator/akinator_game.py
 
 from src.games.base_game import BaseGame
@@ -57,14 +61,14 @@ class AkinatorGame(BaseGame):
         
 
     def is_game_over(self):
-        if self.current_round >= self.max_rounds:
-            self.game_over = True
-            self.game_status = 'Round Limit Reached! You win!'
         return self.game_over
-
-    def check_valid_guess(self, ai_message):
-        # Implement your logic to check if the AI's guess is valid
-        return "my guess is" in ai_message.lower()
+    
+    def reach_max_round(self):
+        if self.current_round >= self.max_rounds:
+            self.game_status = 'Max round reached! You win!'
+            self.game_over = True
+            return True
+        return False
     
     def load_random_object(self, level):
         data_file = LEVEL_DATA_FILES.get(level)

@@ -33,12 +33,12 @@ def akinator_ask_question(session_id: str, user_response: Dict[str, str]):
 
     game = games[session_id]
 
-    if game.is_game_over():
+    if game.is_game_over() or game.reach_max_round():
         return {
             "message": "Game over.",
             "status": game.game_status
         }
-
+    
     user_text = user_response.get('user_response')
     if not user_text:
         raise HTTPException(status_code=400, detail="No user response provided.")
@@ -46,7 +46,7 @@ def akinator_ask_question(session_id: str, user_response: Dict[str, str]):
         raise HTTPException(status_code=400, detail="Please provide a valid answer. Allowed answers are required.")
 
 
-    self.current_round += 1
+    game.current_round += 1
 
     # Update conversation with user response
     game.update_user_conversation(game.conversation, user_text)
@@ -63,9 +63,12 @@ def akinator_ask_question(session_id: str, user_response: Dict[str, str]):
     game.update_AI_conversation(game.conversation, ai_message)
 
     # Check if AI made a guess
-    if game.check_valid_guess(ai_message):
+    if game.check_akinator_valid_guess(ai_message):
         game.game_over = True
-        game.game_status = 'MODEL_WIN'
+        game.game_status = 'MODEL WIN'
+    else:
+        game.game_over = True
+        game.game_status = 'YOU WIN'
 
     return {
         "ai_message": ai_message,
