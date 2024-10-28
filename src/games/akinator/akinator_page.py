@@ -33,11 +33,15 @@ def akinator_ask_question(session_id: str, user_response: Dict[str, str]):
 
     game = games[session_id]
 
-    if game.is_game_over() or game.reach_max_round():
+    if game.is_game_over() or game.reach_max_round(): #max rounds reached
+        game.game_over = True
+
         return {
             "message": "Game over.",
+            "game_over": game.game_over,
             "status": game.game_status
         }
+
     
     user_text = user_response.get('user_response')
     if not user_text:
@@ -62,13 +66,11 @@ def akinator_ask_question(session_id: str, user_response: Dict[str, str]):
     # Update conversation with AI message
     game.update_AI_conversation(game.conversation, ai_message)
 
-    # Check if AI made a guess
-    if game.check_akinator_valid_guess(ai_message):
-        game.game_over = True
-        game.game_status = 'MODEL WIN'
-    else:
-        game.game_over = True
-        game.game_status = 'YOU WIN'
+    # Check if game is over:
+    if game.check_akinator_valid_guess(ai_message): #LLM guessed word
+        if game.guessed_word_correctly(ai_message):
+            game.game_over = True
+            game.game_status = 'MODEL WIN'
 
     return {
         "ai_message": ai_message,

@@ -22,10 +22,6 @@ LEVEL_DATA_FILES = {
 def load_prompts(prompt_file_path):
     with open(prompt_file_path, 'r') as f:
         return json.load(f)
-    
-def check_akinator_valid_guess(s):
-    pattern = r"this is a guess"
-    return len(re.findall(pattern, s.lower())) != 0
 
 class AkinatorGame(BaseGame):
     
@@ -77,9 +73,11 @@ class AkinatorGame(BaseGame):
         with open(data_file, 'r') as f:
             objects_list = json.load(f)
         return random.choice(objects_list)
-
-    def is_llm_giving_answer(self, conversation: Conversation) -> bool:
-        model_last_response = conversation.messages[-1][1]
-        if check_akinator_valid_guess(model_last_response):
-            return True
-        return False
+    
+    def check_akinator_valid_guess(self, s):
+        pattern = r"this is a guess"
+        return len(re.findall(pattern, s.lower())) != 0
+    
+    def guessed_word_correctly(self, s):
+        pattern = self.game_secret.lower()
+        return len(re.findall(pattern, s.lower())) != 0

@@ -20,7 +20,7 @@ def bluffing_start(level: Optional[int] = Query(default=1, ge=1, le=3, descripti
         "message": "Bluffing game started.",
         "session_id": session_id,
         "system_prompt": game.system_prompt,
-        "system_question": game.system_question,
+        "game_secret": game.system_question,
         "instructions": "Please provide your initial statement using the '/provide_statement' endpoint."
     }
 
