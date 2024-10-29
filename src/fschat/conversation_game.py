@@ -57,7 +57,10 @@ class Conversation:
     roles: Tuple[str] = ("USER", "ASSISTANT")
     # All messages. Each item is (role, message).
     # Each message is either a string or a tuple of (string, List[image_url]).
-    messages: List[List[str]] = ()
+
+    # messages: List[List[str]] = ()
+    messages: List[List[str]] = dataclasses.field(default_factory=list) #make messages mutable
+
     # --------------- gameplay related fields --------------- #
     all_questions = []
     # game-related

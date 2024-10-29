@@ -1,35 +1,73 @@
 # src/games/bluffing/bluffing_page.py
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Depends
 from typing import Dict, Optional
 import uuid
 
 from src.games.bluffing.bluffing_game import BluffingGame
-from src.games.game_sessions import games
+from src.database import get_db, GameSession, GameState
+from sqlalchemy.orm import Session
 from fschat.api_provider_game import get_api_provider_stream_iter
 
 router = APIRouter()
 
 @router.post("/start")
-def bluffing_start(level: Optional[int] = Query(default=1, ge=1, le=3, description="Specify the level of the game (1 to 3)")):
+def bluffing_start(
+    level: Optional[int] = Query(default=1, ge=1, le=3, description="Specify the level of the game (1 to 3)"),
+    username: Optional[str] = Query(default="anonymous", description="Specify the username"),
+    db: Session = Depends(get_db)
+):
+    """
+    Start a new Bluffing game with optional level and username parameters.
+    """
     session_id = str(uuid.uuid4())
     game = BluffingGame(game_level=level)
-    games[session_id] = game
+
+    # Create a new GameSession in the database
+    new_session = GameSession(
+        session_id=session_id,
+        username=username,
+        game_name="Bluffing",
+        state=GameState.PLAYING,
+        target_phrase=game.system_question,  # Store the system question as the target phrase
+        model=game.model_name,  # Use the model name from the game instance
+        history=game.conversation.messages,
+        round=game.round,
+        game_over=game.game_over,
+        game_status=game.game_status,
+        level=level
+    )
+    db.add(new_session)
+    db.commit()
 
     return {
         "message": "Bluffing game started.",
         "session_id": session_id,
         "system_prompt": game.system_prompt,
-        "game_secret": game.system_question,
+        "system_question": game.system_question,  # Remove or hide in production
         "instructions": "Please provide your initial statement using the '/provide_statement' endpoint."
     }
 
 @router.post("/provide_statement")
-def bluffing_provide_statement(session_id: str, user_input: Dict[str, str]):
-    if session_id not in games:
+def bluffing_provide_statement(
+    session_id: str,
+    user_input: Dict[str, str],
+    db: Session = Depends(get_db)
+):
+    """
+    Handle the user's initial statement and truthfulness in the Bluffing game.
+    """
+    game_session = db.query(GameSession).filter_by(session_id=session_id, game_name="Bluffing").first()
+    if not game_session:
         raise HTTPException(status_code=400, detail="Invalid or missing session_id.")
 
-    game = games[session_id]
+    # Reconstruct the game state
+    game = BluffingGame(game_level=game_session.level)
+    game.conversation.messages = game_session.history or []
+    game.round = game_session.round
+    game.game_over = game_session.game_over
+    game.game_status = game_session.game_status
+    game.system_question = game_session.target_phrase
 
     user_statement = user_input.get('user_statement')
     user_statement_truth = user_input.get('truthfulness')  # 'True' or 'False'
@@ -54,17 +92,40 @@ def bluffing_provide_statement(session_id: str, user_input: Dict[str, str]):
     # Update conversation with AI message
     game.update_AI_conversation(game.conversation, ai_message)
 
+    # Update the game session in the database
+    game_session.history = list(game.conversation.messages)
+    game_session.round = game.round
+    game_session.game_over = game.game_over
+    game_session.game_status = game.game_status
+    db.add(game_session)
+    db.commit()
+
     return {
         "ai_message": ai_message,
         "game_over": game.is_game_over()
     }
 
 @router.post("/ask_question")
-def bluffing_ask_question(session_id: str, user_response: Dict[str, str]):
-    if session_id not in games:
+def bluffing_ask_question(
+    session_id: str,
+    user_response: Dict[str, str],
+    db: Session = Depends(get_db)
+):
+    """
+    Handle user's input and generate AI's response during the Bluffing game.
+    """
+    game_session = db.query(GameSession).filter_by(session_id=session_id, game_name="Bluffing").first()
+    if not game_session:
         raise HTTPException(status_code=400, detail="Invalid or missing session_id.")
 
-    game = games[session_id]
+    # Reconstruct the game state
+    game = BluffingGame(game_level=game_session.level)
+    game.conversation.messages = game_session.history or []
+    game.round = game_session.round
+    game.game_over = game_session.game_over
+    game.game_status = game_session.game_status
+    game.system_question = game_session.target_phrase
+    game.user_statement_truth = None  # Retrieve from game or store in session if needed
 
     if game.is_game_over():
         return {
@@ -101,6 +162,14 @@ def bluffing_ask_question(session_id: str, user_response: Dict[str, str]):
     if game.round >= game.max_rounds and not game.is_game_over():
         game.set_game_status('MAX_ROUNDS_REACHED')
 
+    # Update the game session in the database
+    game_session.history = list(game.conversation.messages)
+    game_session.round = game.round
+    game_session.game_over = game.game_over
+    game_session.game_status = game.game_status
+    db.add(game_session)
+    db.commit()
+
     return {
         "ai_message": ai_message,
         "game_over": game.is_game_over(),
@@ -108,7 +177,12 @@ def bluffing_ask_question(session_id: str, user_response: Dict[str, str]):
     }
 
 @router.post("/end_game")
-def bluffing_end_game(session_id: str):
-    if session_id in games:
-        del games[session_id]
+def bluffing_end_game(session_id: str, db: Session = Depends(get_db)):
+    """
+    End the Bluffing game and remove the session from the database.
+    """
+    game_session = db.query(GameSession).filter_by(session_id=session_id, game_name="Bluffing").first()
+    if game_session:
+        db.delete(game_session)
+        db.commit()
     return {"message": "Bluffing game ended."}

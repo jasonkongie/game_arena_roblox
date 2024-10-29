@@ -3,7 +3,6 @@ Messages = []
 with open("../GenerationTemplates/template.json", mode="r") as file:
     Messages = json.load(file)
 
-print(Messages)
 ChatLogString = ""
 while True:
     nickname = input("Nickname: ")

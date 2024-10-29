@@ -35,25 +35,16 @@ class BaseGame(ABC):
     def __init__(self, max_rounds: int) -> None:
 
         self.max_rounds = max_rounds
-        # self.save_path = save_path #former parameter
-        # self.conversation = [] #we don't save conversation here. We use fschat/conversation_game.py
-        
         models, _, api_endpoint_info = get_model_list(
             'src/config/api_endpoint.json', multimodal=False
         )
-        self.model_name = 'gpt-4o-2024-08-06'
+        self.model_name = random.choice(models)
         self.model_api_info = api_endpoint_info[self.model_name]
         self.conversation = get_conversation_template(self.model_name)
         self.round = 0
         self.game_over = False
         self.game_status = None
-        self.system_prompt = None  # To be set by subclasses
-        # self.game_name = ""
-        # self.game_rule = ""
-        # self.game_start = False
-        # self.generate_next_llm_query = False
-        # self.next_llm_query_type = None
-        
+        self.system_prompt = None  # To be set by subclasses  
         self.available_levels = []
         self.game_level = None
 
