@@ -60,8 +60,9 @@ class AkinatorGame(BaseGame):
         return self.game_over
     
     def reach_max_round(self):
-        if self.current_round >= self.max_rounds:
-            self.game_status = 'Max round reached! You win!'
+        if self.current_round > self.max_rounds:
+            # self.game_status = 'Max round reached! You win!' #this is incorrect due to adverisrial 
+            self.game_status = 'PLAYER_LOSE'
             self.game_over = True
             return True
         return False

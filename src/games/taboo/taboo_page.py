@@ -33,7 +33,7 @@ def taboo_ask_question(session_id: str, user_response: Dict[str, str]):
     if game.is_game_over():
         return {
             "message": "Game over.",
-            "status": game.game_status
+            "status": "PLAYER_LOSE"
         }
 
     user_text = user_response.get('user_response')
@@ -58,13 +58,15 @@ def taboo_ask_question(session_id: str, user_response: Dict[str, str]):
     # Taboo-specific game logic
     if game.check_word_uttered(ai_message):
         game.game_over = True
-        game.game_status = 'MODEL_LOSE'
-    elif game.check_valid_guess(ai_message):
-        game.game_over = True
-        game.game_status = 'MODEL_WIN'
+        game.game_status = 'PLAYER_WIN'
+
+    #just because LLM made a guess doesn't mean game is over
+    # elif game.check_valid_guess(ai_message):
+    #     game.game_over = True
+    #     game.game_status = 'PLAYER_LOSE'
     elif game.round >= game.max_rounds:
         game.game_over = True
-        game.game_status = 'MAX_ROUNDS_REACHED'
+        game.game_status = 'PLAYER_LOSE'
 
     return {
         "ai_message": ai_message,

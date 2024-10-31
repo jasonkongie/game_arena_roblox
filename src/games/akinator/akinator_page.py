@@ -70,7 +70,7 @@ def akinator_ask_question(session_id: str, user_response: Dict[str, str]):
     if game.check_akinator_valid_guess(ai_message): #LLM guessed word
         if game.guessed_word_correctly(ai_message):
             game.game_over = True
-            game.game_status = 'MODEL WIN'
+            game.game_status = 'PLAYER_WIN'
 
     return {
         "ai_message": ai_message,
