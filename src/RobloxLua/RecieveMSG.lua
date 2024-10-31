@@ -1,0 +1,5 @@
+local TextChatService = game:GetService("TextChatService")
+local Channel = TextChatService:WaitForChild("TextChannels"):WaitForChild("RBXGeneral")
+game.ReplicatedStorage.ClientSendMsg.OnClientEvent:Connect(function(name, message)
+	Channel:DisplaySystemMessage(name..": "..message)
+end)
