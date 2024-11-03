@@ -39,7 +39,7 @@ def akinator_ask_question(session_id: str, user_response: Dict[str, str]):
         return {
             "message": "Game over.",
             "game_over": game.game_over,
-            "status": game.game_status
+            "game_status": game.game_status
         }
 
     
