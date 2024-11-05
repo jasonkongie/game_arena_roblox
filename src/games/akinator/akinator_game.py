@@ -55,6 +55,11 @@ class AkinatorGame(BaseGame):
         self.game_over = False
         self.game_status = None
         
+        self.first_user_message = (
+            "I have a secret object in my mind. Now you can start asking me questions and guess it."
+        )
+
+        
 
     def is_game_over(self):
         return self.game_over

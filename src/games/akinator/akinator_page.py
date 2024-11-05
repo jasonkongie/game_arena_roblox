@@ -19,6 +19,8 @@ def akinator_start(level: Optional[int] = Query(default=1, ge=1, le=3, descripti
     game = AkinatorGame(level=level)
     games[session_id] = game
 
+    game.initialize_game(game.conversation)
+
     return {
         "message": "Akinator game started at level {}".format(level),
         "session_id": session_id,
