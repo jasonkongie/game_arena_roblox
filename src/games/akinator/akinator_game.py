@@ -34,7 +34,12 @@ class AkinatorGame(BaseGame):
         super().__init__(max_rounds=max_round)
         # Load system prompts
         prompt_file = os.path.join(os.path.dirname(__file__), 'akinator_optimized_prompts.json')
-        self.game_secret = self.load_random_object(level)
+        # self.game_secret = self.load_random_object(level)
+        
+        game_secret_file = os.path.join(os.path.dirname(__file__), 'akinator.json')
+        with open(game_secret_file, 'r') as f:
+            game_secrets = json.load(f)
+        self.game_secret = random.choice(list(game_secrets))
         
         # Randomly select a system prompt
         system_prompts = load_prompts(prompt_file)
@@ -54,7 +59,7 @@ class AkinatorGame(BaseGame):
         self.current_round = 0
         self.game_over = False
         self.game_status = None
-        
+
         self.first_user_message = (
             "I have a secret object in my mind. Now you can start asking me questions and guess it."
         )
