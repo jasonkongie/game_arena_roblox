@@ -52,7 +52,7 @@ def bluffing_provide_statement(session_id: str, user_input: Dict[str, str]):
     )
 
     # Update conversation with AI message
-    game.update_AI_conversation(game.conversation, ai_message)
+    #game.update_AI_conversation(game.conversation, ai_message)
 
     return {
         "ai_message": ai_message,
@@ -87,7 +87,8 @@ def bluffing_ask_question(session_id: str, user_response: Dict[str, str]):
     )
 
     # Update conversation with AI message
-    game.update_AI_conversation(game.conversation, ai_message)
+    #game.update_AI_conversation(game.conversation, ai_message)
+    
     game.round += 1
 
     # Check if AI made a guess

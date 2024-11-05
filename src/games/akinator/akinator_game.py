@@ -64,13 +64,11 @@ class AkinatorGame(BaseGame):
             "I have a secret object in my mind. Now you can start asking me questions and guess it."
         )
 
-        
-
     def is_game_over(self):
         return self.game_over
     
     def reach_max_round(self):
-        if self.current_round > self.max_rounds:
+        if self.current_round >= self.max_rounds:
             self.game_status = 'PLAYER_LOSE'
             self.game_over = True
             return True

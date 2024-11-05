@@ -307,6 +307,9 @@
 
 # app.py
 
+import sys
+sys.path.append('/home/ubuntu/game_arena_roblox')
+
 from fastapi import FastAPI
 from src.games.akinator.akinator_page import router as akinator_router
 from src.games.taboo.taboo_page import router as taboo_router

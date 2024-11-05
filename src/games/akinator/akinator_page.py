@@ -21,6 +21,18 @@ def akinator_start(level: Optional[int] = Query(default=1, ge=1, le=3, descripti
 
     game.initialize_game(game.conversation)
 
+    next_llm_query_type = "question"
+    game.update_AI_conversation(game.conversation, None)
+
+    ai_message = game.generation_response(
+        next_llm_query_type,
+        get_api_provider_stream_iter,
+        game.conversation,
+    )
+
+    # Update conversation with AI message
+    #game.update_AI_conversation(game.conversation, ai_message)
+
     return {
         "message": "Akinator game started at level {}".format(level),
         "session_id": session_id,
@@ -35,7 +47,7 @@ def akinator_ask_question(session_id: str, user_response: Dict[str, str]):
 
     game = games[session_id]
 
-    if game.is_game_over() or game.reach_max_round(): #max rounds reached
+    if game.reach_max_round(): #max rounds reached
         game.game_over = True
 
         return {
@@ -44,6 +56,8 @@ def akinator_ask_question(session_id: str, user_response: Dict[str, str]):
             "game_status": game.game_status
         }
 
+    print("user response:")
+    print(user_response)
     
     user_text = user_response.get('user_response')
     if not user_text:
@@ -51,13 +65,12 @@ def akinator_ask_question(session_id: str, user_response: Dict[str, str]):
     if user_text.lower() not in (answer.lower() for answer in game.allowed_answers):
         raise HTTPException(status_code=400, detail="Please provide a valid answer. Allowed answers are required.")
 
-
-    game.current_round += 1
-
     # Update conversation with user response
     game.update_user_conversation(game.conversation, user_text)
 
     next_llm_query_type = "question"
+
+    game.update_AI_conversation(game.conversation, None)
 
     ai_message = game.generation_response(
         next_llm_query_type,
@@ -66,11 +79,10 @@ def akinator_ask_question(session_id: str, user_response: Dict[str, str]):
     )
 
     # Update conversation with AI message
-    game.update_AI_conversation(game.conversation, ai_message)
+    #game.update_AI_conversation(game.conversation, ai_message)
 
     # Check if game is over:
     if game.check_akinator_valid_guess(ai_message): #LLM guessed word
-        game.game_over = True
         if game.guessed_word_correctly(ai_message):
             game.game_status = 'PLAYER_WIN'
             game.game_over = True
