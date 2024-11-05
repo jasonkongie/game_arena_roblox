@@ -73,19 +73,7 @@ def akinator_ask_question(session_id: str, user_response: Dict[str, str]):
         game.game_over = True
         if game.guessed_word_correctly(ai_message):
             game.game_status = 'PLAYER_WIN'
-
-        game.game_status = 'PLAYER_LOSE'
-        return {
-            "ai_message": ai_message,
-            "game_over": game.is_game_over(),
-            "game_status": game.game_status
-        }
-
-    return {
-        "ai_message": ai_message,
-        "game_over": game.is_game_over(),
-        "game_status": game.game_status
-    }
+            game.game_over = True
 
 @router.post("/end_game")
 def akinator_end_game(session_id: str):
