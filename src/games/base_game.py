@@ -41,7 +41,7 @@ class BaseGame(ABC):
         models, _, api_endpoint_info = get_model_list(
             'src/config/api_endpoint.json', multimodal=False
         )
-        self.model_name = 'gpt-4o-2024-08-06'
+        self.model_name = random.choice(models)
         self.model_api_info = api_endpoint_info[self.model_name]
         self.conversation = get_conversation_template(self.model_name)
         self.round = 0
