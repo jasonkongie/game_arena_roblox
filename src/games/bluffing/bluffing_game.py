@@ -18,15 +18,26 @@ class BluffingGame(BaseGame):
         with open(prompt_file, 'r') as f:
             system_prompts = json.load(f)
         all_prompts = list(system_prompts.values())
+
         self.system_prompt = random.choice(all_prompts)
+        # self.system_prompt = random.choice(all_prompts)
         self.system_prompt_index = all_prompts.index(self.system_prompt)
 
         # Load bluffing questions
-        bluffing_questions_file = os.path.join(os.path.dirname(__file__), 'bluffing_multilevel.json')
+        bluffing_questions_file = os.path.join(os.path.dirname(__file__), 'bluffing.json')
         with open(bluffing_questions_file, 'r') as f:
             self.bluffing_questions = json.load(f)
-        self.bluffing_questions_level = self.bluffing_questions[f'level {self.game_level}']
-        self.system_question = random.choice(self.bluffing_questions_level)
+
+        random_topic = random.choice(self.bluffing_questions['topics'])
+        random_topic_statement = random_topic['topic']
+        level_statement = random_topic['levels'].get(f'level_{self.game_level}', None)
+
+        topic_and_level = {
+            "topic": random_topic_statement,
+            "bluffing_statement": level_statement
+        }
+
+        self.system_question = topic_and_level
 
         # Initialize conversation
         self.round = 0
