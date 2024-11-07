@@ -119,18 +119,18 @@ class BaseGame(ABC):
             output = data["text"].strip()
 
         # Post-process the output based on the type
-        if type == 'question':
+        if type == 'question' and self.round + 1 < self.max_rounds:
             if question_header_in_output_stream(output):
-                conversation.update_last_message(output)
-            else:
-                conversation.update_last_message(prefix + ' ' + output)
+                #conversation.update_last_message(output)
+                print("prefix:")
+                print(prefix)
+                output = output[12:]        # FIXME (lanxiang): use regular expression to strip 'question #:'
+
+            output = prefix + ' ' + output
         elif type == 'taboo_guess':
-            if guess_in_output_stream(output):
-                conversation.update_last_message(output)
-            else:
-                conversation.update_last_message(prefix + ' ' + output)
-        else:
-            conversation.update_last_message(output)
+            if not guess_in_output_stream(output):
+                output = prefix + ' ' + output
+        conversation.update_last_message(output)
         
         self.round += 1
         return output

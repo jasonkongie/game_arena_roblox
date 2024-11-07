@@ -53,7 +53,6 @@ def taboo_ask_question(session_id: str, user_response: Dict[str, str]):
 
     # Update conversation with AI message
     game.update_AI_conversation(game.conversation, ai_message)
-    game.round += 1
 
     # Taboo-specific game logic
     if game.check_word_uttered(ai_message):

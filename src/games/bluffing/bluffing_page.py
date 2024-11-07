@@ -16,34 +16,17 @@ def bluffing_start(level: Optional[int] = Query(default=1, ge=1, le=3, descripti
     game = BluffingGame(game_level=level)
     games[session_id] = game
 
-    return {
-        "message": "Bluffing game started.",
-        "session_id": session_id,
-        "system_prompt": game.system_prompt,
-        "game_secret": game.system_question,
-        "instructions": "Please provide your initial statement using the '/provide_statement' endpoint."
-    }
-
-@router.post("/provide_statement")
-def bluffing_provide_statement(session_id: str, user_input: Dict[str, str]):
-    if session_id not in games:
-        raise HTTPException(status_code=400, detail="Invalid or missing session_id.")
-
-    game = games[session_id]
-
-    user_statement = user_input.get('user_statement')
-    user_statement_truth = user_input.get('truthfulness')  # 'True' or 'False'
-
-    if not user_statement or user_statement_truth not in ['True', 'False']:
-        raise HTTPException(status_code=400, detail="Please provide 'user_statement' and 'truthfulness' ('True' or 'False').")
-
+    user_statement = game.system_question["bluffing_statement"]
     # Store the user's initial statement and truthfulness
     game.first_user_message = f"Statement: {user_statement}"
-    game.user_statement_truth = user_statement_truth
+
+    game.user_statement_truth = 'False'               # FIXME (lanxiang): currently we assume all statements are False
 
     # Update conversation
     game.update_user_conversation(game.conversation, game.first_user_message)
     next_llm_query_type = "question"
+
+    game.update_AI_conversation(game.conversation, None)
 
     ai_message = game.generation_response(
         next_llm_query_type,
@@ -51,13 +34,49 @@ def bluffing_provide_statement(session_id: str, user_input: Dict[str, str]):
         game.conversation,
     )
 
+    return {
+        "message": "Bluffing game started.",
+        "ai_message": ai_message,
+        "session_id": session_id,
+        "system_prompt": game.system_prompt,
+        "game_secret": game.system_question,
+        "instructions": "Please provide your initial statement using the '/provide_statement' endpoint."
+    }
+
+#@router.post("/provide_statement")
+#def bluffing_provide_statement(session_id: str, user_input: Dict[str, str]):
+#    if session_id not in games:
+#        raise HTTPException(status_code=400, detail="Invalid or missing session_id.")
+
+#    game = games[session_id]
+
+#    user_statement = user_input.get('user_statement')
+#    user_statement_truth = user_input.get('truthfulness', False)  # FIXME (lanxiang): currently we assume all statements are False
+
+#    if not user_statement or user_statement_truth not in ['True', 'False']:
+#        raise HTTPException(status_code=400, detail="Please provide 'user_statement' and 'truthfulness' ('True' or 'False').")
+
+    # Store the user's initial statement and truthfulness
+#    game.first_user_message = f"Statement: {user_statement}"
+#    game.user_statement_truth = user_statement_truth
+
+    # Update conversation
+#    game.update_user_conversation(game.conversation, game.first_user_message)
+#    next_llm_query_type = "question"
+
+#    ai_message = game.generation_response(
+#        next_llm_query_type,
+#        get_api_provider_stream_iter,
+#        game.conversation,
+#    )
+
     # Update conversation with AI message
     #game.update_AI_conversation(game.conversation, ai_message)
 
-    return {
-        "ai_message": ai_message,
-        "game_over": game.is_game_over()
-    }
+#    return {
+#        "ai_message": ai_message,
+#        "game_over": game.is_game_over()
+#    }
 
 @router.post("/ask_question")
 def bluffing_ask_question(session_id: str, user_response: Dict[str, str]):
@@ -76,6 +95,11 @@ def bluffing_ask_question(session_id: str, user_response: Dict[str, str]):
     if not user_text:
         raise HTTPException(status_code=400, detail="No user response provided.")
 
+    # ------ for the last round, enforce AI to make a guess ------ #
+    if game.round + 1 >= game.max_rounds and not game.is_game_over():
+        user_text = user_text + "\n\nProvided responses above, please make a judgement on whether the statement is True or False with an analysis."
+    # ------ for the last round, enforce AI to make a guess ------ #
+
     # Update conversation with user response
     game.update_user_conversation(game.conversation, user_text)
     next_llm_query_type = "question"
@@ -88,19 +112,18 @@ def bluffing_ask_question(session_id: str, user_response: Dict[str, str]):
 
     # Update conversation with AI message
     #game.update_AI_conversation(game.conversation, ai_message)
-    
-    game.round += 1
 
     # Check if AI made a guess
     if game.is_llm_giving_answer(ai_message):
         if game.check_user_win(ai_message, game.user_statement_truth):
-            game.set_game_status('USER_WIN')
+            game.set_game_status('PLAYER_WIN')
         else:
-            game.set_game_status('MODEL_WIN')
+            game.set_game_status('PLAYER_LOSE')
 
     # Check for max rounds
     if game.round >= game.max_rounds and not game.is_game_over():
-        game.set_game_status('MAX_ROUNDS_REACHED')
+        # LLM fails to make a guess despite of best efforts
+        game.set_game_status('PLAYER_WIN')
 
     return {
         "ai_message": ai_message,

@@ -35,6 +35,7 @@ def akinator_start(level: Optional[int] = Query(default=1, ge=1, le=3, descripti
 
     return {
         "message": "Akinator game started at level {}".format(level),
+        "ai_message": ai_message,
         "session_id": session_id,
         "system_prompt": game.system_prompt,
         "game_secret": game.game_secret  # For testing purposes; remove in production
@@ -86,6 +87,12 @@ def akinator_ask_question(session_id: str, user_response: Dict[str, str]):
         if game.guessed_word_correctly(ai_message):
             game.game_status = 'PLAYER_WIN'
             game.game_over = True
+    
+    return {
+        "ai_message": ai_message,
+        "game_over": game.is_game_over(),
+        "game_status": game.game_status
+    }
 
 @router.post("/end_game")
 def akinator_end_game(session_id: str):

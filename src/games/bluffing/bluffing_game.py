@@ -8,7 +8,7 @@ from games.base_game import BaseGame
 
 class BluffingGame(BaseGame):
     def __init__(self, game_level=1):
-        max_rounds = game_level * 2 + 3
+        max_rounds = game_level * 2 + 4
         super().__init__(max_rounds=max_rounds)
 
         self.game_level = game_level
